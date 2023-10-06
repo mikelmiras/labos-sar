@@ -45,18 +45,29 @@ def get_file(s: socket.socket, serv_addr, filename: str):
                 """
         resp = s.recv(BLOCK_SIZE + 4)
         resp_code = resp[0:2]
+        block_number = resp[2:4]
+        print("Block_number: ", int.from_bytes(block_number, byteorder='big'))
+        ACK_ = ACK
+        block_number = int.from_bytes(block_number, byteorder='big')
+        ACK_ += expected_block.to_bytes(2, byteorder='big')
+        s.sendto(ACK_, serv_addr)
         resp_code = int.from_bytes(resp_code, byteorder='big')
+        print("Respuesta recibida: ", resp_code)
         if resp_code == 3:
             longitud = len(resp)
-            print("Leyendo datos.")
-            datos = resp[4:longitud - 1]
-            f.write(datos)
+            print("Leyendo bloque ", block_number)
+            if block_number == expected_block:
+                datos = resp[4:longitud - 1]
+                f.write(datos)
+                expected_block = expected_block + 1
+
             if longitud < 516:
                 print("Archivo leído completamente")
                 break
         else:
             print("Error al leer los datos")
-            break
+            f.close()
+            exit()
 
     f.close()
     elapsed = time.time() - start
