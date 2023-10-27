@@ -35,7 +35,7 @@ while True:
 			if len(buffer) == 0:
 				dialogo.close()
 				break
-			print("[PID {}] Mensaje recibido: ".format(os.getpid()), buffer.decode())
+			print("[PID {}]Mensaje recibido: ".format(os.getpid()), buffer.decode())
 			dialogo.sendall(buffer)
 		
 		dialogo.close()
