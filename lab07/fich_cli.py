@@ -14,13 +14,15 @@ ER_MSG = (
 	"El fichero no existe.",
 	"Error al bajar el fichero.",
 	"Un usuario anonimo no tiene permisos para esta operacion.",
-	"Error al borrar el fichero.",
-	 "Error al subir el fichero"
-	  )
+	"Error al borrar el fichero.", 
+ 	"El archivo que estas intentando añadir ya existe.",
+  	"El archivo que intentaste añadir no se pudo añadir correctamente.", 
+   	"Informacion sobre el archivo no recivida :D", 
+    "El tipo de fichero que estas intentando subir no es valido.")
 
 class Menu:
-	List, Download, Upload, Delete, Exit = range( 1, 6 )
-	Options = ( "Lista de ficheros", "Bajar fichero", "Subir fichero", "Borrar fichero", "Salir" )
+	List, Download, Delete, Add, Exit = range( 1, 6 )
+	Options = ( "Lista de ficheros", "Bajar fichero", "Borrar fichero", "Add", "Salir" )
 
 	def menu():
 		print( "+{}+".format( '-' * 30 ) )
@@ -147,15 +149,33 @@ if __name__ == "__main__":
 			s.sendall( message.encode( "ascii" ) )
 			message = szasar.recvline( s ).decode( "ascii" )
 			break
-		elif option == Menu.Upload:
-			fich_name = input("Introduce el nombre del fichero que quieres subir: ")
-			try:
-				fitx = open(fich_name, "rb")
-			except:
-				print("El archivo especificado no existe")
-				continue
-			message = "{}{}\r\n".format(szasar.Command.Upload, fich_name)
-			s.sendall(message.encode("ascii"))
-			response = szasar.recvline(s).decode("ascii")
-			print("Respuesta recibida: ", response)
+		elif option == Menu.Add: 
+			filename = input("Indica el fichero que quieres subir: ")
+			message = "{}{}\r\n".format( szasar.Command.Add, filename )
+			s.sendall( message.encode("ascii") )
+			message = szasar.recvline( s ).decode( "ascii" )
+			if not iserror( message ):
+					print("Enviando el archivo")
+
+					try: 
+						file_size = os.path.getsize( os.path.join( '' , filename ) )
+					except: 
+						print('Error el archivo que estas intentando enviar no existe en tu ordenador.')
+						continue
+
+					message = "{}{}\r\n".format(szasar.Command.Add2, file_size)
+     
+					s.sendall( message.encode( "ascii" ))
+					message = szasar.recvline( s ).decode( "ascii" )
+
+					if not iserror( message ):
+						try:
+							with open( filename, "rb" ) as f:
+								filedata = f.read()
+							message = "{}{}\r\n".format(szasar.Command.Add2, filedata)
+							s.sendall( message.encode('ascii') )
+						except: 
+							s.close()
+
+
 	s.close()

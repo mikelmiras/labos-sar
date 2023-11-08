@@ -1,5 +1,5 @@
 class Command:
-	User, Password, List, Download, Download2, Delete, Upload, Exit = ("USER", "PASS", "LIST", "DOWN", "DOW2", "DELE", "ADD", "EXIT")
+	User, Password, List, Download, Download2, Delete, Exit, Add, Add2 = ("USER", "PASS", "LIST", "DOWN", "DOW2", "DELE", "EXIT", "ADD", "ADD2")
 
 """
 Reads exactly one line of text (delimited by '\r\n') from the socket s and returns it.
@@ -22,14 +22,23 @@ def recvline( s, removeEOL = True ):
 		else:
 			CRreceived = False
 
+
 """
 Reads exactly size bytes from socket s and returns them.
 """
-def recvall( s, size ):
-	message = b''
-	while( len( message ) < size ):
-		chunk = s.recv( size - len( message ) )
-		if chunk == b'':
-			raise EOFError( "Connection closed by the peer before receiving the requested {} bytes.".format( size ) )
-		message += chunk
-	return message
+def recvall(s, size):
+    message = b''
+    bytes_recd = 0
+    
+
+    while bytes_recd < size:
+        chunk = s.recv(min(size - bytes_recd, 512))  # Se establece un tamaño máximo de lectura para evitar bloqueos
+        if chunk == b'':  # Si no se recibe ningún dato, se sale del bucle
+            raise EOFError("Connection closed by the peer before receiving the requested {} bytes.".format(size))
+        message += chunk
+        print('Mensaje')
+        print(message)
+        bytes_recd += len(chunk)
+
+    return message
+

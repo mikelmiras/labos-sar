@@ -9,9 +9,11 @@ MAX_FILE_SIZE = 10 * 1 << 20 # 10 MiB
 SPACE_MARGIN = 50 * 1 << 20  # 50 MiB
 USERS = ("anonimous", "sar", "sza")
 PASSWORDS = ("", "sar", "sza")
+RECEIVED_FILE_SIZE = None
+ADDING_FILE_NAME = "" 
 
 class State:
-	Identification, Authentication, Main, Downloading = range(4)
+	Identification, Authentication, Main, Downloading, Adding, Adding_Data = range(6)
 
 def sendOK( s, params="" ):
 	s.sendall( ("OK{}\r\n".format( params )).encode( "ascii" ) )
@@ -21,9 +23,11 @@ def sendER( s, code=1 ):
 
 def session( s ):
 	state = State.Identification
-
+	
+	
 	while True:
 		message = szasar.recvline( s ).decode( "ascii" )
+  
 		if not message:
 			return
 
@@ -106,26 +110,64 @@ def session( s ):
 				sendER( s, 8 )
 			else:
 				sendOK( s )
-		elif message.startswith(szasar.Command.Upload):
-			print("Solicitud de subida de archivo recibida")
-			nombre = message[3:]
-			print("Archivo solicitado: ", nombre)
-			file_path = os.path.join("files", nombre)
-			try:
-				file_path = open(file_path, "rb")
-				file_path.close()
-				sendER(s, 9)
-				continue
-			except Exception as e:
-				print(e)
-				print("El fichero no existe, se puede subir")
-				sendOK(s)
+
 		elif message.startswith( szasar.Command.Exit ):
 			sendOK( s )
 			return
 
+		elif message.startswith( szasar.Command.Add2 ):
+
+
+			if(state == State.Adding_Data):
+				print("File data: ")
+				print('---------------')
+				print(RECEIVED_FILE_SIZE)
+
+				file_data = szasar.recvall( s , int( RECEIVED_FILE_SIZE ))
+
+				print(file_data)
+				try:
+					with open( FILES_PATH + '/' + ADDING_FILE_NAME, "wb" ) as f:
+						f.write( file_data )
+					sendOK( s )
+					continue
+				except:
+					sendER( s, 10 )
+					continue
+
+			if(state == State.Adding):
+				RECEIVED_FILE_SIZE = message[4:]
+				state = State.Adding_Data
+				sendOK( s )
+				continue
+
+
+   
+		elif message.startswith( szasar.Command.Add ):
+			# Procesar lo que noes envian
+			user_filename = message[3:]   
+			lista_de_archivos = os.listdir( FILES_PATH )
+
+			file_splited_by_dot = user_filename.split('.')
+			if(len(file_splited_by_dot) == 1):	
+				sendER( s, 12 )		
+				continue
+
+	
+			if user_filename not in lista_de_archivos:
+				state = State.Adding
+				ADDING_FILE_NAME = user_filename
+				sendOK( s )
+				continue
+			else:
+				sendER( s, 9 ) 
+				continue
+
+		
 		else:
 			sendER( s )
+
+		
 
 if __name__ == "__main__":
 	s = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
