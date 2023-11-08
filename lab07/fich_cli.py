@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+	#!/usr/bin/env python3
 
 import socket, sys, os
 import szasar
@@ -43,6 +43,7 @@ class Menu:
 
 def iserror( message ):
 	if( message.startswith( "ER" ) ):
+		print(message)
 		code = int( message[2:] )
 		print( ER_MSG[code] )
 		return True
@@ -151,29 +152,30 @@ if __name__ == "__main__":
 			break
 		elif option == Menu.Add: 
 			filename = input("Indica el fichero que quieres subir: ")
+			try: 
+				file_size = os.path.getsize( os.path.join( '' , filename ) )
+			except: 
+				print('Error el archivo que estas intentando enviar no existe en tu ordenador.')
+				continue
+			
 			message = "{}{}\r\n".format( szasar.Command.Add, filename )
 			s.sendall( message.encode("ascii") )
 			message = szasar.recvline( s ).decode( "ascii" )
-			if not iserror( message ):
-					print("Enviando el archivo")
-
-					try: 
-						file_size = os.path.getsize( os.path.join( '' , filename ) )
-					except: 
-						print('Error el archivo que estas intentando enviar no existe en tu ordenador.')
-						continue
-
+			print("message1: ", message)
+			if not iserror( message ):				
 					message = "{}{}\r\n".format(szasar.Command.Add2, file_size)
      
 					s.sendall( message.encode( "ascii" ))
+					print("Enviando el archivo")
 					message = szasar.recvline( s ).decode( "ascii" )
-
+					print("message2: ", message)
 					if not iserror( message ):
 						try:
 							with open( filename, "rb" ) as f:
 								filedata = f.read()
-							message = "{}{}\r\n".format(szasar.Command.Add2, filedata)
-							s.sendall( message.encode('ascii') )
+								message = "{}\r\n".format(szasar.Command.Add2)
+								s.sendall( message.encode('ascii') )
+								s.sendall( filedata )
 						except: 
 							s.close()
 

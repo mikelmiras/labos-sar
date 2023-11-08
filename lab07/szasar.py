@@ -26,19 +26,12 @@ def recvline( s, removeEOL = True ):
 """
 Reads exactly size bytes from socket s and returns them.
 """
-def recvall(s, size):
-    message = b''
-    bytes_recd = 0
-    
-
-    while bytes_recd < size:
-        chunk = s.recv(min(size - bytes_recd, 512))  # Se establece un tamaño máximo de lectura para evitar bloqueos
-        if chunk == b'':  # Si no se recibe ningún dato, se sale del bucle
-            raise EOFError("Connection closed by the peer before receiving the requested {} bytes.".format(size))
-        message += chunk
-        print('Mensaje')
-        print(message)
-        bytes_recd += len(chunk)
-
-    return message
+def recvall( s, size ):
+	message = b''
+	while( len( message ) < size ):
+		chunk = s.recv( size - len( message ) )
+		if chunk == b'':
+			raise EOFError( "Connection closed by the peer before receiving the requested {} bytes.".format( size ) )
+		message += chunk
+	return message
 

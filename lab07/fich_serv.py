@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import socket, sys, os, signal
-import szasar
+import szasar, datetime
 
 PORT = 50000
 FILES_PATH = "files"
@@ -27,7 +27,7 @@ def session( s ):
 	
 	while True:
 		message = szasar.recvline( s ).decode( "ascii" )
-  
+		print("{}: {}".format(datetime.datetime.now().strftime("%-H:%-M:%S"), message))
 		if not message:
 			return
 
@@ -122,19 +122,20 @@ def session( s ):
 				print("File data: ")
 				print('---------------')
 				print(RECEIVED_FILE_SIZE)
-
+				print(message)
+				
 				file_data = szasar.recvall( s , int( RECEIVED_FILE_SIZE ))
-
-				print(file_data)
+				print("File data: ", file_data)
 				try:
 					with open( FILES_PATH + '/' + ADDING_FILE_NAME, "wb" ) as f:
 						f.write( file_data )
 					sendOK( s )
-					continue
+#					state = State.Main
 				except:
 					sendER( s, 10 )
+				finally:
+					state = State.Main
 					continue
-
 			if(state == State.Adding):
 				RECEIVED_FILE_SIZE = message[4:]
 				state = State.Adding_Data
@@ -160,7 +161,9 @@ def session( s ):
 				sendOK( s )
 				continue
 			else:
+				print(user_filename, " ya está en la lista")
 				sendER( s, 9 ) 
+				
 				continue
 
 		
