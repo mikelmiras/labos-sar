@@ -8,8 +8,8 @@ SERV_POP = "dif-mail.ehu.es"
 PORT_POP = 2110
 
 # Configuración servidor SMTP local de la asignatura SAR
-SERV_SMTP =
-PORT_SMTP =
+SERV_SMTP = "dif-mail.ehu.es"
+PORT_SMTP = 2025
 
 """AVISO: A REALIZAR POR EL/LA ESTUDIANTE:
 Puedes crear otra clase similar para el protocolo SMTP.
@@ -173,21 +173,51 @@ if __name__ == "__main__":
 	"""A COMPLETAR POR EL/LA ESTUDIANTE:
 	Conexión con el servidor SMTP
 	"""
-
+	s.connect(serv_smtp)
+	s.sendall(b'HELO something\r\n')
+	data = recvline(s)
+	code = int(data.split(b" ")[0].decode())
+	if int(code / 200) != 1:
+		print("Error connecting to SMTP")
+		exit(-1)
 	"""A COMPLETAR POR EL/LA ESTUDIANTE:
 	Client Initiation
 	"""
-
+	print(data)
+	print("Conectado al servidor SMTP")
+	mail_from = str(CUENTA + "@diffiss.eus")
+	s.sendall('MAIL FROM: {}\r\n'.format(mail_from).encode())
+	resp = recvline(s)
+	s.sendall('RCPT TO: {}\r\n'.format(mail_from).encode())
+	resp = recvline(s)
 	"""A COMPLETAR POR EL/LA ESTUDIANTE:
 	Mail Transaction
 	"""
-
+	
 	"""A COMPLETAR POR EL/LA ESTUDIANTE:
 	Cuerpo mensaje
 	Fin cuerpo mensaje
 	"""
+	s.sendall(b"DATA\r\n")
+	resp = recvline(s)
+	message = ""
+	for asig, cont in lcont.items():
+		message = "{}: {}\r\n".format(asig, cont)
+		s.sendall(message)
+
+	print("Mensaje enviado!")
+
+	resp = recvline(s)
+	code = int(resp.decode().split(" ")[0])
+	if int(code / 200) != 1:
+		print("Error al enviar los datos")
+		exit(-1)
 
 	"""A COMPLETAR POR EL/LA ESTUDIANTE:
 	Cerrar sesión de usuario SMTP
 	Cerrar conexión con servidor SMTP
 	"""
+	print("Mensaje enviado correctamente. Cerrando conexión.")
+	s.sendall("QUIT\r\n")
+	s.close()
+
