@@ -174,7 +174,7 @@ if __name__ == "__main__":
 	Conexión con el servidor SMTP
 	"""
 	s.connect(serv_smtp)
-	s.sendall(b'HELO something\r\n')
+	s.sendall(b'HELO mailserver\r\n')
 	data = recvline(s)
 	code = int(data.split(b" ")[0].decode())
 	if int(code / 200) != 1:
@@ -183,7 +183,6 @@ if __name__ == "__main__":
 	"""A COMPLETAR POR EL/LA ESTUDIANTE:
 	Client Initiation
 	"""
-	print(data)
 	print("Conectado al servidor SMTP")
 	mail_from = str(CUENTA + "@diffiss.eus")
 	s.sendall('MAIL FROM: {}\r\n'.format(mail_from).encode())
@@ -200,14 +199,18 @@ if __name__ == "__main__":
 	"""
 	s.sendall(b"DATA\r\n")
 	resp = recvline(s)
+	print("After sending data: ", resp)
 	message = ""
+	buffer_mensaje = ''
 	for asig, cont in lcont.items():
 		message = "{}: {}\r\n".format(asig, cont)
-		s.sendall(message)
+		buffer_mensaje += message
+		s.sendall(message.encode())
 
-	print("Mensaje enviado!")
+	s.sendall(b".\r\n")
 
 	resp = recvline(s)
+	print("Mensaje enviado: ", buffer_mensaje)
 	code = int(resp.decode().split(" ")[0])
 	if int(code / 200) != 1:
 		print("Error al enviar los datos")
@@ -218,6 +221,6 @@ if __name__ == "__main__":
 	Cerrar conexión con servidor SMTP
 	"""
 	print("Mensaje enviado correctamente. Cerrando conexión.")
-	s.sendall("QUIT\r\n")
+	s.sendall(b"QUIT\r\n")
 	s.close()
 

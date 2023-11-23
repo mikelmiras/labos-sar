@@ -3,7 +3,7 @@
 import socket, sys
 
 # Mirar servidor DNS en fichero "/etc/resolv.conf"
-DNS_DIR = '127.0.0.53'
+DNS_DIR = '8.8.4.4'
 DNS_PORT = 53
 
 if len( sys.argv ) != 2:
