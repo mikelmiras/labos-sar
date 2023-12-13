@@ -27,6 +27,8 @@ class ChatProtocol(LineReceiver):
 		user_list_encoded = 'USR {}\r\n'.format(names).encode()
 		print("Sending user list: ", user_list_encoded)
 		self.sendLine(user_list_encoded)
+
+
 	def connectionLost(self, reason):
 		"""A COMPLETAR POR EL/LA ESTUDIANTE:
 		"""
@@ -39,9 +41,26 @@ class ChatProtocol(LineReceiver):
 		protocol = line[0:3]
 		if (protocol == b"NME"):
 			user = line[3:].decode().replace("\r\n", "")
+			for key in self.factory.users:
+				self.factory.users[key].sendLine("INN{}\r\n".format(user).encode())
 			self.factory.users[user] = self
 			print("User {} added to list".format(user))
 			self.name = user
+			self.sendLine(b'+\r\n')
+		elif (protocol == b"OUT"):
+			user = line[3:].decode().replace("\r\n", "")
+			print("User {} was disconnected")
+			for u in self.factory.users:
+				if (u!=user):
+					self.factory.users[u].sendLine("OUT{}\r\n".format(user).encode())
+			del self.factory.users[user]
+		elif (protocol == b"MSG"):
+			message = line[3:].replace(b'\r\n', b'').decode()
+			print("Message was sent: ", message)
+			for user in self.factory.users:
+				if (user != self.name):
+					self.factory.users[user].sendLine("MSG{} {}\r\n".format(self.name, message).encode())
+			self.sendLine(b'+\r\n')
 class ChatFactory(Factory):
 	def __init__(self):
 		self.users:dict = {}
