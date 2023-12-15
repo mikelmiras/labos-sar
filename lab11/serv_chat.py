@@ -3,11 +3,18 @@
 from twisted.protocols.basic import LineReceiver
 from twisted.internet.protocol import Factory
 from twisted.internet import reactor
+from twisted.internet import ssl
+from OpenSSL import SSL
 
 MAX_USERS = 100
 MAX_MSG_LENGTH = 255
 MAX_USER_LENGTH = 16
 PORT = 8000
+
+class ServerTLSContext(ssl.DefaultOpenSSLContextFactory):
+	def __init__(self, *args, **kw):
+		kw['sslmethod'] = SSL.TLS1_2_VERSION
+		ssl.DefaultOpenSSLContextFactory.__init__(self, *args, **kw)
 
 class ChatProtocol(LineReceiver):
 	def __init__(self, factory):
@@ -40,6 +47,8 @@ class ChatProtocol(LineReceiver):
 		del self.factory.users[self.name]
 	def notifyUserLeft(self, user:str, who:str):
 		self.factory.users[user].sendLine("OUT{}\r\n".format(who).encode())
+	def callLater(self):
+		print("Call later")
 	def lineReceived(self, line):
 		"""A COMPLETAR POR EL/LA ESTUDIANTE:
 		"""
@@ -82,10 +91,17 @@ class ChatProtocol(LineReceiver):
 			for u in self.factory.users:
 				if (u!=user):
 					self.factory.users[u].sendLine("WRT{}\r\n".format(user).encode())
+		elif (protocol == b'TLS'):
+			ctx = ServerTLSContext(
+			privateKeyFileName='privkey.key',
+			certificateFileName='cert.cert')
+			self.transport.startTLS(ctx, self.factory)
+			self.sendLine("+\r\n".encode())
+
 class ChatFactory(Factory):
 	def __init__(self):
 		self.users:dict = {}
-		self.features = { 'FILES':'0' , 'CEN':'1', 'NOP':'0', 'SSL':'0' }
+		self.features = { 'FILES':'0' , 'CEN':'1', 'NOP':'0', 'SSL':'1' }
 		self.forbidden_words = []
 		try:
 			f = open("forbidden_words.list", "r")
@@ -99,6 +115,13 @@ class ChatFactory(Factory):
 
 	def buildProtocol(self, addr):
 		return ChatProtocol(self)
+
+
+
+
+
+
+	
 
 if __name__ == "__main__":
 	reactor.listenTCP(PORT, ChatFactory())
