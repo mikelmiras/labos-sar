@@ -33,7 +33,13 @@ class ChatProtocol(LineReceiver):
 		"""A COMPLETAR POR EL/LA ESTUDIANTE:
 		"""
 		print("Connection with {} lost: ".format(self.name), reason)
+		for u in self.factory.users:
+			if (u!=self.name):
+				print("Notifying {} that connection with {} was lost".format(u, self.name))
+				self.notifyUserLeft(u, self.name)
 		del self.factory.users[self.name]
+	def notifyUserLeft(self, user:str, who:str):
+		self.factory.users[user].sendLine("OUT{}\r\n".format(who).encode())
 	def lineReceived(self, line):
 		"""A COMPLETAR POR EL/LA ESTUDIANTE:
 		"""
@@ -49,10 +55,10 @@ class ChatProtocol(LineReceiver):
 			self.sendLine(b'+\r\n')
 		elif (protocol == b"OUT"):
 			user = line[3:].decode().replace("\r\n", "")
-			print("User {} was disconnected")
+			print("User {} was disconnected".format(user))
 			for u in self.factory.users:
 				if (u!=user):
-					self.factory.users[u].sendLine("OUT{}\r\n".format(user).encode())
+					self.notifyUserLeft(u, user)
 			del self.factory.users[user]
 		elif (protocol == b"MSG"):
 			message = line[3:].replace(b'\r\n', b'').decode()
