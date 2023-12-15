@@ -62,9 +62,19 @@ class ChatProtocol(LineReceiver):
 			del self.factory.users[user]
 		elif (protocol == b"MSG"):
 			message = line[3:].replace(b'\r\n', b'').decode()
+			msg_letters = message.split(" ")
+			new_msg = []
+			for word in msg_letters:
+				new_word = word
+				if word in self.factory.forbidden_words:
+					print("Removing forbidden word '{}' from message".format(word))
+					word = "#" * len(word)
+					new_word = word
+				new_msg.append(new_word)
+			message = " ".join(new_msg)
 			print("Message was sent: ", message)
 			for user in self.factory.users:
-				if (user != self.name):
+				if (True):
 					self.factory.users[user].sendLine("MSG{} {}\r\n".format(self.name, message).encode())
 			self.sendLine(b'+\r\n')
 		elif (protocol == b"WRT"):
@@ -76,6 +86,16 @@ class ChatFactory(Factory):
 	def __init__(self):
 		self.users:dict = {}
 		self.features = { 'FILES':'0' , 'CEN':'1', 'NOP':'0', 'SSL':'0' }
+		self.forbidden_words = []
+		try:
+			f = open("forbidden_words.list", "r")
+			data = f.readlines()
+			for word in data:
+				self.forbidden_words.append(word.replace("\n", ""))
+			f.close()
+			print("Loaded forbidden words: ", self.forbidden_words)
+		except Exception as e:
+			print("Couldn't open forbidden words' list")
 
 	def buildProtocol(self, addr):
 		return ChatProtocol(self)
