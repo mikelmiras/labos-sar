@@ -17,8 +17,8 @@ class ChatProtocol(LineReceiver):
 	def connectionMade(self):
 		"""A COMPLETAR POR EL/LA ESTUDIANTE:
 		"""
-		print("Connection made: ")
-		self.sendLine(b"FTR 0000\r\n")
+		ftr = "FTR{}\r\n".format(" ".join(self.factory.features.values())).encode()
+		self.sendLine(ftr)
 		names = ""
 		for key in self.factory.users:
 			print(names)
@@ -67,10 +67,15 @@ class ChatProtocol(LineReceiver):
 				if (user != self.name):
 					self.factory.users[user].sendLine("MSG{} {}\r\n".format(self.name, message).encode())
 			self.sendLine(b'+\r\n')
+		elif (protocol == b"WRT"):
+			user = self.name
+			for u in self.factory.users:
+				if (u!=user):
+					self.factory.users[u].sendLine("WRT{}\r\n".format(user).encode())
 class ChatFactory(Factory):
 	def __init__(self):
 		self.users:dict = {}
-		self.features = { 'FILES':'0' , 'CEN':'0', 'NOP':'0', 'SSL':'0' }
+		self.features = { 'FILES':'0' , 'CEN':'1', 'NOP':'0', 'SSL':'0' }
 
 	def buildProtocol(self, addr):
 		return ChatProtocol(self)
