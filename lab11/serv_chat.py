@@ -13,7 +13,7 @@ PORT = 8000
 
 class ServerTLSContext(ssl.DefaultOpenSSLContextFactory):
 	def __init__(self, *args, **kw):
-		kw['sslmethod'] = SSL.TLS1_2_VERSION
+		kw['sslmethod'] = SSL.TLSv1_2_METHOD
 		ssl.DefaultOpenSSLContextFactory.__init__(self, *args, **kw)
 
 class ChatProtocol(LineReceiver):
@@ -93,8 +93,8 @@ class ChatProtocol(LineReceiver):
 					self.factory.users[u].sendLine("WRT{}\r\n".format(user).encode())
 		elif (protocol == b'TLS'):
 			ctx = ServerTLSContext(
-			privateKeyFileName='privkey.key',
-			certificateFileName='cert.cert')
+			privateKeyFileName='privada.key',
+			certificateFileName='certificado.crt')
 			self.transport.startTLS(ctx, self.factory)
 			self.sendLine("+\r\n".encode())
 
