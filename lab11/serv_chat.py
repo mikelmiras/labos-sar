@@ -20,6 +20,8 @@ class ChatProtocol(LineReceiver):
 	def __init__(self, factory):
 		self.factory = factory
 		self.name = None
+		self.timer = reactor.callLater(10, self.handleTimeout)
+
 
 	def connectionMade(self):
 		"""A COMPLETAR POR EL/LA ESTUDIANTE:
@@ -34,6 +36,10 @@ class ChatProtocol(LineReceiver):
 		user_list_encoded = 'USR {}\r\n'.format(names).encode()
 		print("Sending user list: ", user_list_encoded)
 		self.sendLine(user_list_encoded)
+		
+	def handleTimeout(self):	
+		self.sendLine(b"NOP\r\n")
+		self.timer.reset(10)
 
 
 	def connectionLost(self, reason):
@@ -47,11 +53,12 @@ class ChatProtocol(LineReceiver):
 		del self.factory.users[self.name]
 	def notifyUserLeft(self, user:str, who:str):
 		self.factory.users[user].sendLine("OUT{}\r\n".format(who).encode())
-	def callLater(self):
-		print("Call later")
 	def lineReceived(self, line):
+
 		"""A COMPLETAR POR EL/LA ESTUDIANTE:
 		"""
+		self.timer.reset(10)
+		self.timer = reactor.callLater(10, self.handleTimeout)
 		print("Line received: ", line)
 		protocol = line[0:3]
 		if (protocol == b"NME"):
@@ -101,7 +108,7 @@ class ChatProtocol(LineReceiver):
 class ChatFactory(Factory):
 	def __init__(self):
 		self.users:dict = {}
-		self.features = { 'FILES':'0' , 'CEN':'1', 'NOP':'0', 'SSL':'1' }
+		self.features = { 'FILES':'0' , 'CEN':'1', 'NOP':'1', 'SSL':'1' }
 		self.forbidden_words = []
 		try:
 			f = open("forbidden_words.list", "r")
